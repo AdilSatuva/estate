@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оценка стоимости</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    .predict-form { background: #f8f9fa; padding: 20px; border-radius: 10px; }
+    #result { display: none; }
+  </style>
+</head>
+<body>
+  <header class="bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg container">
+      <a class="navbar-brand" href="/"><span class="text-primary">Prime</span>Property</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="/search"><i class="fas fa-search"></i> Поиск</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/predict"><i class="fas fa-calculator"></i> Оценка</a></li>
+          <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Главная</a></li>
+          {% if session.user_id %}
+            <li class="nav-item"><a class="nav-link" href="/profile"><i class="fas fa-user"></i> Профиль</a></li>
+            <li class="nav-item"><a class="nav-link" href="/my_apartments"><i class="fas fa-list"></i> Мои объявления</a></li>
+            <li class="nav-item"><a class="nav-link" href="/add_apartment"><i class="fas fa-plus"></i> Добавить</a></li>
+            {% if session.username == 'admin' %}
+            <li class="nav-item"><a class="nav-link" href="/admin"><i class="fas fa-cog"></i> Админ</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="/login"><i class="fas fa-sign-in-alt"></i> Войти</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container py-5">
+    <h1 class="mb-4">Оценка стоимости квартиры</h1>
+    <div class="predict-form">
+      <form id="predictForm">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <select class="form-select" name="city" required>
+              <option value="">Город</option>
+              <option value="Бишкек">Бишкек</option>
+              <option value="Ош">Ош</option>
+              <option value="Джалал-Абад">Джалал-Абад</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <input type="number" class="form-control" name="rooms" placeholder="Комнат (1-4)" min="1" max="4" required>
+          </div>
+          <div class="col-md-3">
+            <input type="number" class="form-control" name="floor" placeholder="Этаж (1-20)" min="1" max="20" required>
+          </div>
+          <div class="col-md-3">
+            <input type="number" class="form-control" name="area" placeholder="Площадь (м²)" min="10" step="0.1" required>
+          </div>
+          <div class="col-md-12">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-calculator"></i> Оценить</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div id="result" class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title">Результат оценки</h5>
+        <p id="resultText"></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-dark text-white py-4">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h3>KyrgyzRealty</h3>
+          <p>Лучшие предложения недвижимости в Кыргызстане</p>
+        </div>
+        <div class="col-md-4">
+          <h3>Контакты</h3>
+          <p><i class="fas fa-phone"></i> <a href="tel:+996555123456" class="text-white">+996 555 123 456</a></p>
+        </div>
+        <div class="col-md-4">
+          <h3>Рабочие часы</h3>
+          <p>Пн-Пт: 9:00 - 18:00</p>
+        </div>
+      </div>
+      <div class="text-center mt-3">
+        <p>© 2025 KyrgyzRealty. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById('predictForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch('/predict', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        const resultDiv = document.getElementById('result');
+        const resultText = document.getElementById('resultText');
+        if (data.error) {
+          resultText.innerHTML = `<span class="text-danger">${data.error}</span>`;
+        } else {
+          resultText.innerHTML = `
+            <p><strong>Город:</strong> ${data.city}</p>
+            <p><strong>Комнат:</strong> ${data.rooms}</p>
+            <p><strong>Этаж:</strong> ${data.floor}</p>
+            <p><strong>Площадь:</strong> ${data.area} м²</p>
+            <p><strong>Оценочная стоимость:</strong> ${data.price.toLocaleString('ru-RU')} KGS</p>
+          `;
+        }
+        resultDiv.style.display = 'block';
+      })
+      .catch(error => {
+        document.getElementById('resultText').innerHTML = `<span class="text-danger">Ошибка: ${error}</span>`;
+        document.getElementById('result').style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>

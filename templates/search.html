@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск недвижимости</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/search.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="navbar-brand" href="/"><span>Prime</span>Property</a>
+      <nav>
+        <a class="nav-link active" href="/search"><i class="fas fa-search"></i> Поиск</a>
+        <a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> Оценка</a>
+        <a class="nav-link" href="/"><i class="fas fa-home"></i> Главная</a>
+        {% if session.user_id %}
+          <a class="nav-link" href="/profile"><i class="fas fa-user"></i> Профиль</a>
+          <a class="nav-link" href="/my_apartments"><i class="fas fa-list"></i> Мои объявления</a>
+          <a class="nav-link" href="/add_apartment"><i class="fas fa-plus"></i> Добавить</a>
+          <a class="nav-link" href="/favorites"><i class="fas fa-heart"></i> Избранное</a>
+          {% if session.username == 'admin' %}
+          <a class="nav-link" href="/admin"><i class="fas fa-cog"></i> Админ</a>
+          {% endif %}
+          <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+        {% else %}
+          <a class="nav-link" href="/login"><i class="fas fa-sign-in-alt"></i> Войти</a>
+          <a class="nav-link" href="/register"><i class="fas fa-user-plus"></i> Регистрация</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container py-5">
+      <h1>Поиск недвижимости</h1>
+      <div class="card p-4 mb-4">
+        <form id="searchForm" method="POST">
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label><i class="fas fa-city"></i> Город</label>
+                {{ form.city(class="form-control") }}
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-map-marker-alt"></i> Адрес</label>
+                {{ form.address(class="form-control") }}
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-money-bill-wave"></i> Цена (KGS)</label>
+                <div class="row">
+                  <div class="col">
+                    {{ form.min_price(class="form-control", placeholder="Мин") }}
+                  </div>
+                  <div class="col">
+                    {{ form.max_price(class="form-control", placeholder="Макс") }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label><i class="fas fa-ruler-combined"></i> Площадь (м²)</label>
+                <div class="row">
+                  <div class="col">
+                    {{ form.min_area(class="form-control", placeholder="Мин") }}
+                  </div>
+                  <div class="col">
+                    {{ form.max_area(class="form-control", placeholder="Макс") }}
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-bed"></i> Количество комнат</label>
+                {{ form.rooms(class="form-control") }}
+              </div>
+              <div class="form-group">
+                <label>Удобства</label>
+                <div class="row">
+                  {% for amenity in form.amenities %}
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      {{ amenity(class="form-check-input") }}
+                      {{ amenity.label(class="form-check-label") }}
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group mt-3">
+            <label>Сортировать по</label>
+            <select class="form-control" name="sort_by">
+              <option value="price_asc">Цена (по возрастанию)</option>
+              <option value="price_desc">Цена (по убыванию)</option>
+              <option value="area_asc">Площадь (по возрастанию)</option>
+              <option value="area_desc">Площадь (по убыванию)</option>
+            </select>
+          </div>
+          <div class="form-actions mt-3">
+            <button type="submit" class="btn-primary"><i class="fas fa-search"></i> Найти</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="searchResults" class="properties-grid">
+        {% if apartments %}
+        {% for apartment in apartments %}
+        <div class="card property-card">
+          <div class="property-image">
+            <img src="{{ apartment.images[0] if apartment.images else '/static/placeholder.jpg' }}" class="card-img-top" alt="Квартира">
+            <div class="price-badge">{{ apartment.price | format_price }} KGS</div>
+          </div>
+          <div class="property-details card-body">
+            <h3 class="card-title">{{ apartment.city }} - {{ apartment.address }}</h3>
+            <p class="location"><i class="fas fa-map-marker-alt"></i> {{ apartment.city }}</p>
+            <div class="features">
+              <span><i class="fas fa-bed"></i> {{ apartment.rooms }} комнат</span>
+              <span><i class="fas fa-ruler-combined"></i> {{ apartment.area }} м²</span>
+            </div>
+            <div class="result-actions mt-3">
+              <a href="/details/{{ apartment.id }}" class="details-button"><i class="fas fa-info-circle"></i> Подробности</a>
+              {% if session.user_id %}
+              <form action="/toggle_favorite/{{ apartment.id }}" method="POST" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn-secondary"><i class="fas fa-heart {{ 'text-danger' if apartment.id in favorites else '' }}"></i> {{ 'Удалить из избранного' if apartment.id in favorites else 'Добавить в избранное' }}</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="no-results text-center">
+          <i class="fas fa-home"></i>
+          <p>Объявления не найдены</p>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if total_pages > 1 %}
+      <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center mt-4">
+          {% if page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('search', page=page-1, city=request.args.get('city', ''), address=request.args.get('address', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_area=request.args.get('min_area', ''), max_area=request.args.get('max_area', ''), rooms=request.args.get('rooms', ''), sort_by=request.args.get('sort_by', '')) }}">Предыдущая</a>
+          </li>
+          {% endif %}
+          {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {{ 'active' if p == page else '' }}">
+            <a class="page-link" href="{{ url_for('search', page=p, city=request.args.get('city', ''), address=request.args.get('address', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_area=request.args.get('min_area', ''), max_area=request.args.get('max_area', ''), rooms=request.args.get('rooms', ''), sort_by=request.args.get('sort_by', '')) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+          {% if page < total_pages %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('search', page=page+1, city=request.args.get('city', ''), address=request.args.get('address', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_area=request.args.get('min_area', ''), max_area=request.args.get('max_area', ''), rooms=request.args.get('rooms', ''), sort_by=request.args.get('sort_by', '')) }}">Следующая</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>KyrgyzRealty</h3>
+          <p>Лучшие предложения недвижимости в Кыргызстане</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-telegram-plane"></i></a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Контакты</h3>
+          <p><i class="fas fa-phone"></i> <a href="tel:+996555123456">+996 555 123 456</a></p>
+          <p><i class="fas fa-envelope"></i> <a href="mailto:info@kyrgyzrealty.kg">info@kyrgyzrealty.kg</a></p>
+        </div>
+        <div class="footer-section">
+          <h3>Рабочие часы</h3>
+          <p>Пн-Пт: 9:00 - 18:00</p>
+          <p>Сб: 10:00 - 14:00</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 KyrgyzRealty. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="alert-container">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch('/search', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        const results = document.getElementById('searchResults');
+        results.innerHTML = '';
+        if (data.length === 0) {
+          results.innerHTML = `
+            <div class="no-results text-center">
+              <i class="fas fa-home"></i>
+              <p>Объявления не найдены</p>
+            </div>`;
+        } else {
+          data.forEach(apartment => {
+            const div = document.createElement('div');
+            div.className = 'card property-card';
+            div.innerHTML = `
+              <div class="property-image">
+                <img src="${apartment.images[0] || '/static/placeholder.jpg'}" class="card-img-top" alt="Квартира">
+                <div class="price-badge">${apartment.price.toLocaleString('ru-RU')} KGS</div>
+              </div>
+              <div class="property-details card-body">
+                <h3 class="card-title">${apartment.city} - ${apartment.address}</h3>
+                <p class="location"><i class="fas fa-map-marker-alt"></i> ${apartment.city}</p>
+                <div class="features">
+                  <span><i class="fas fa-bed"></i> ${apartment.rooms} комнат</span>
+                  <span><i class="fas fa-ruler-combined"></i> ${apartment.area} м²</span>
+                </div>
+                <div class="result-actions mt-3">
+                  <a href="/details/${apartment.id}" class="details-button"><i class="fas fa-info-circle"></i> Подробности</a>
+                </div>
+              </div>`;
+            results.appendChild(div);
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
