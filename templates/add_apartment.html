@@ -6,8 +6,8 @@
   <title>{% trans %}Добавить квартиру{% endtrans %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/index.css">
 </head>
 <body>
   <header>
@@ -17,91 +17,130 @@
         <a class="nav-link" href="/search"><i class="fas fa-search"></i> {% trans %}Поиск{% endtrans %}</a>
         <a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> {% trans %}Оценка{% endtrans %}</a>
         <a class="nav-link" href="/"><i class="fas fa-home"></i> {% trans %}Главная{% endtrans %}</a>
-        <a class="nav-link" href="/profile"><i class="fas fa-user"></i> {% trans %}Профиль{% endtrans %}</a>
-        <a class="nav-link" href="/my_apartments"><i class="fas fa-list"></i> {% trans %}Мои объявления{% endtrans %}</a>
-        <a class="nav-link active" href="/add_apartment"><i class="fas fa-plus"></i> {% trans %}Добавить{% endtrans %}</a>
-        <a class="nav-link" href="/favorites"><i class="fas fa-heart"></i> {% trans %}Избранное{% endtrans %}</a>
-        {% if session.username == 'admin' %}
-        <a class="nav-link" href="/admin"><i class="fas fa-cog"></i> {% trans %}Админ{% endtrans %}</a>
+        {% if session.user_id %}
+          <a class="nav-link" href="/profile"><i class="fas fa-user"></i> {% trans %}Профиль{% endtrans %}</a>
+          <a class="nav-link" href="/my_apartments"><i class="fas fa-building"></i> {% trans %}Мои квартиры{% endtrans %}</a>
+          <a class="nav-link active" href="/add_apartment"><i class="fas fa-plus"></i> {% trans %}Добавить{% endtrans %}</a>
+          <a class="nav-link" href="/favorites"><i class="fas fa-heart"></i> {% trans %}Избранное{% endtrans %}</a>
+          {% if session.username == 'admin' %}
+            <a class="nav-link" href="/admin"><i class="fas fa-cog"></i> {% trans %}Админ{% endtrans %}</a>
+          {% endif %}
+          <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> {% trans %}Выйти{% endtrans %}</a>
+        {% else %}
+          <a class="nav-link" href="/login"><i class="fas fa-sign-in-alt"></i> {% trans %}Войти{% endtrans %}</a>
+          <a class="nav-link" href="/register"><i class="fas fa-user-plus"></i> {% trans %}Регистрация{% endtrans %}</a>
         {% endif %}
-        <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> {% trans %}Выйти{% endtrans %}</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <div class="container py-5">
-      <h1>{% trans %}Добавить квартиру{% endtrans %}</h1>
-      <div class="card p-4">
-        <form id="addApartmentForm" method="POST" enctype="multipart/form-data">
-          {{ form.hidden_tag() }}
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label><i class="fas fa-city"></i> {% trans %}Город{% endtrans %}</label>
-                <select class="form-control" id="city" name="city" required>
-                  <option value="">{% trans %}Выберите город{% endtrans %}</option>
-                  <option value="Бишкек">Бишкек</option>
-                  <option value="Ош">Ош</option>
-                  <option value="Джалал-Абад">Джалал-Абад</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-map-marker-alt"></i> {% trans %}Адрес{% endtrans %}</label>
-                <input type="text" class="form-control" id="address" name="address" placeholder="{% trans %}пр. Чуй 123{% endtrans %}" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-bed"></i> {% trans %}Количество комнат{% endtrans %}</label>
-                <input type="number" class="form-control" id="rooms" name="rooms" min="1" max="4" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-building"></i> {% trans %}Этаж{% endtrans %}</label>
-                <input type="number" class="form-control" id="floor" name="floor" min="1" max="20" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-building"></i> {% trans %}Всего этажей{% endtrans %}</label>
-                <input type="number" class="form-control" id="total_floors" name="total_floors" min="1" max="50" required>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="form-group">
-                <label><i class="fas fa-ruler-combined"></i> {% trans %}Площадь (м²){% endtrans %}</label>
-                <input type="number" class="form-control" id="area" name="area" min="10" step="0.1" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-money-bill-wave"></i> {% trans %}Цена (KGS){% endtrans %}</label>
-                <input type="number" class="form-control" id="price" name="price" min="0" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-comment"></i> {% trans %}Описание{% endtrans %}</label>
-                <textarea class="form-control" id="description" name="description" rows="4"></textarea>
-              </div>
-              <div class="form-group">
-                <label>{% trans %}Удобства{% endtrans %}</label>
+    <section class="featured">
+      <div class="container">
+        <h2>{% trans %}Добавить квартиру{% endtrans %}</h2>
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card p-4">
+              {% if form.errors %}
+                <div class="alert alert-danger">
+                  <strong>{% trans %}Ошибки формы{% endtrans %}:</strong>
+                  <ul>
+                    {% for field, errors in form.errors.items() %}
+                      {% for error in errors %}
+                        <li>{{ form[field].label.text }}: {{ error }}</li>
+                      {% endfor %}
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+              <form method="POST" action="{{ url_for('add_apartment') }}" enctype="multipart/form-data" id="addApartmentForm">
+                {{ form.hidden_tag() }}
                 <div class="row">
-                  {% for amenity in ['Парковка', 'Балкон', 'Лифт', 'Мебель', 'Кондиционер', 'Охрана'] %}
-                  <div class="col-md-4">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" name="amenities" value="{{ amenity }}" id="amenity_{{ loop.index }}">
-                      <label class="form-check-label" for="amenity_{{ loop.index }}">{{ amenity }}</label>
-                    </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ form.city.id }}" class="form-label"><i class="fas fa-city"></i> {{ form.city.label.text }} <span class="text-danger">*</span></label>
+                    {{ form.city(class="form-select", required=True) }}
+                    {% for error in form.city.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
                   </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ form.rooms.id }}" class="form-label"><i class="fas fa-door-open"></i> {{ form.rooms.label.text }} <span class="text-danger">*</span></label>
+                    {{ form.rooms(class="form-select", required=True) }}
+                    {% for error in form.rooms.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ form.floor.id }}" class="form-label"><i class="fas fa-level-up-alt"></i> {{ form.floor.label.text }} <span class="text-danger">*</span></label>
+                    {{ form.floor(class="form-control", required=True) }}
+                    {% for error in form.floor.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ form.total_floors.id }}" class="form-label"><i class="fas fa-building"></i> {{ form.total_floors.label.text }} <span class="text-danger">*</span></label>
+                    {{ form.total_floors(class="form-control", required=True) }}
+                    {% for error in form.total_floors.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.address.id }}" class="form-label"><i class="fas fa-map-marker-alt"></i> {{ form.address.label.text }} <span class="text-danger">*</span></label>
+                  {{ form.address(class="form-control", required=True) }}
+                  {% for error in form.address.errors %}
+                    <span class="text-danger">{{ error }}</span>
                   {% endfor %}
                 </div>
-              </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ form.area.id }}" class="form-label"><i class="fas fa-ruler-combined"></i> {{ form.area.label.text }} <span class="text-danger">*</span></label>
+                    {{ form.area(class="form-control", required=True) }}
+                    {% for error in form.area.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ form.price.id }}" class="form-label"><i class="fas fa-dollar-sign"></i> {{ form.price.label.text }} <span class="text-danger">*</span></label>
+                    {{ form.price(class="form-control", required=True) }}
+                    {% for error in form.price.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.description.id }}" class="form-label"><i class="fas fa-comment"></i> {{ form.description.label.text }}</label>
+                  {{ form.description(class="form-control", rows=4) }}
+                  {% for error in form.description.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.amenities.id }}" class="form-label"><i class="fas fa-check-circle"></i> {{ form.amenities.label.text }}</label>
+                  {{ form.amenities(class="form-select", multiple=True, size=6) }}
+                  <small class="form-text text-muted">{% trans %}Удерживайте Ctrl/Cmd для выбора нескольких удобств{% endtrans %}</small>
+                  {% for error in form.amenities.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.images.id }}" class="form-label"><i class="fas fa-image"></i> {{ form.images.label.text }} ({% trans %}1-10 файлов, PNG/JPG/JPEG, обязательно{% endtrans %}) <span class="text-danger">*</span></label>
+                  {{ form.images(class="form-control", multiple=True, accept=".png,.jpg,.jpeg", required=True) }}
+                  {% for error in form.images.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                </div>
+                <div class="d-grid">
+                  {{ form.submit(class="btn btn-primary") }}
+                </div>
+              </form>
             </div>
           </div>
-          <div class="form-group mt-3">
-            <label><i class="fas fa-image"></i> {% trans %}Изображения (до 10){% endtrans %}</label>
-            <input class="form-control" type="file" id="images" name="images" multiple accept="image/*">
-            <div id="imagePreview" class="mt-2"></div>
-          </div>
-          <div class="form-actions mt-3">
-            <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> {% trans %}Добавить квартиру{% endtrans %}</button>
-          </div>
-        </form>
+        </div>
       </div>
-    </div>
+    </section>
   </main>
 
   <footer>
@@ -133,35 +172,52 @@
     </div>
   </footer>
 
-  <div class="alert">
+  <div class="alert-container">
     {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     {% endfor %}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    document.getElementById('images').addEventListener('change', function(e) {
-      const files = e.target.files;
-      if (files.length > 10) {
-        alert('{% trans %}Максимум 10 изображений{% endtrans %}');
-        e.target.value = '';
-        return;
-      }
-      const preview = document.getElementById('imagePreview');
-      preview.innerHTML = '';
-      for (let file of files) {
-        if (file.type.startsWith('image/')) {
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(file);
-          img.style.maxWidth = '100px';
-          img.style.maxHeight = '100px';
-          img.style.margin = '5px';
-          preview.appendChild(img);
+    document.getElementById('addApartmentForm').addEventListener('submit', function(e) {
+      const requiredFields = document.querySelectorAll('#addApartmentForm [required]');
+      const imageInput = document.querySelector('#{{ form.images.id }}');
+      let valid = true;
+
+      // Check required text/select fields
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          valid = false;
+          field.classList.add('is-invalid');
+        } else {
+          field.classList.remove('is-invalid');
         }
+      });
+
+      // Check images (at least one required)
+      if (!imageInput.files.length) {
+        valid = false;
+        imageInput.classList.add('is-invalid');
+        if (!document.querySelector('#{{ form.images.id }}-error')) {
+          const error = document.createElement('span');
+          error.id = '{{ form.images.id }}-error';
+          error.className = 'text-danger';
+          error.textContent = '{% trans %}Выберите хотя бы одно изображение{% endtrans %}';
+          imageInput.parentNode.appendChild(error);
+        }
+      } else {
+        imageInput.classList.remove('is-invalid');
+        const error = document.querySelector('#{{ form.images.id }}-error');
+        if (error) error.remove();
+      }
+
+      if (!valid) {
+        e.preventDefault();
+        alert('{% trans %}Пожалуйста, заполните все обязательные поля и выберите хотя бы одно изображение.{% endtrans %}');
       }
     });
   </script>

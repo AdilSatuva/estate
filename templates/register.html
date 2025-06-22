@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ get_locale() }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Регистрация</title>
+  <title>{{ _('Регистрация') }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="/static/styles.css">
@@ -13,11 +14,11 @@
     <div class="container">
       <a class="navbar-brand" href="/"><span>Prime</span>Property</a>
       <nav>
-        <a class="nav-link" href="/search"><i class="fas fa-search"></i> Поиск</a>
-        <a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> Оценка</a>
-        <a class="nav-link" href="/"><i class="fas fa-home"></i> Главная</a>
-        <a class="nav-link" href="/login"><i class="fas fa-sign-in-alt"></i> Войти</a>
-        <a class="nav-link active" href="/register"><i class="fas fa-user-plus"></i> Регистрация</a>
+        <a class="nav-link" href="/search"><i class="fas fa-search"></i> {{ _('Поиск') }}</a>
+        <a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> {{ _('Оценка') }}</a>
+        <a class="nav-link" href="/"><i class="fas fa-home"></i> {{ _('Главная') }}</a>
+        <a class="nav-link" href="/login"><i class="fas fa-sign-in-alt"></i> {{ _('Войти') }}</a>
+        <a class="nav-link active" href="/register"><i class="fas fa-user-plus"></i> {{ _('Регистрация') }}</a>
       </nav>
     </div>
   </header>
@@ -27,28 +28,40 @@
       <div class="row justify-content-center">
         <div class="col-md-6">
           <div class="card p-4">
-            <h1 class="text-center mb-4">Регистрация</h1>
-            <form method="POST" action="/register">
-              <div class="form-group mb-3">
-                <label><i class="fas fa-user"></i> Имя пользователя</label>
-                <input type="text" class="form-control" name="username" required>
+            <h1 class="text-center mb-4">{{ _('Регистрация') }}</h1>
+            <form method="POST" action="{{ url_for('register') }}">
+              {{ form.hidden_tag() }}
+              <div class="mb-3">
+                <label for="{{ form.username.id }}" class="form-label"><i class="fas fa-user"></i> {{ form.username.label.text }}</label>
+                {{ form.username(class="form-control", required=True) }}
+                {% if form.username.errors %}
+                  {% for error in form.username.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                {% endif %}
               </div>
-              <div class="form-group mb-3">
-                <label><i class="fas fa-envelope"></i> Email</label>
-                <input type="email" class="form-control" name="email" required>
+              <div class="mb-3">
+                <label for="{{ form.password.id }}" class="form-label"><i class="fas fa-lock"></i> {{ form.password.label.text }}</label>
+                {{ form.password(class="form-control", required=True) }}
+                {% if form.password.errors %}
+                  {% for error in form.password.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                {% endif %}
               </div>
-              <div class="form-group mb-3">
-                <label><i class="fas fa-lock"></i> Пароль</label>
-                <input type="password" class="form-control" name="password" required>
+              <div class="mb-3">
+                <label for="{{ form.confirm_password.id }}" class="form-label"><i class="fas fa-lock"></i> {{ form.confirm_password.label.text }}</label>
+                {{ form.confirm_password(class="form-control", required=True) }}
+                {% if form.confirm_password.errors %}
+                  {% for error in form.confirm_password.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                {% endif %}
               </div>
-              <div class="form-group mb-3">
-                <label><i class="fas fa-lock"></i> Подтвердите пароль</label>
-                <input type="password" class="form-control" name="confirm_password" required>
+              <div class="d-grid">
+                {{ form.submit(class="btn btn-primary") }}
               </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary w-100"><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
-              </div>
-              <p class="text-center mt-3">Уже есть аккаунт? <a href="/login">Войдите</a></p>
+              <p class="text-center mt-3">{{ _('Уже есть аккаунт?') }} <a href="{{ url_for('login') }}">{{ _('Войдите') }}</a></p>
             </form>
           </div>
         </div>
@@ -61,7 +74,7 @@
       <div class="footer-content">
         <div class="footer-section">
           <h3>KyrgyzRealty</h3>
-          <p>Лучшие предложения недвижимости в Кыргызстане</p>
+          <p>{{ _('Лучшие предложения недвижимости в Кыргызстане') }}</p>
           <div class="social-links">
             <a href="#"><i class="fab fa-facebook-f"></i></a>
             <a href="#"><i class="fab fa-instagram"></i></a>
@@ -69,18 +82,18 @@
           </div>
         </div>
         <div class="footer-section">
-          <h3>Контакты</h3>
+          <h3>{{ _('Контакты') }}</h3>
           <p><i class="fas fa-phone"></i> <a href="tel:+996555123456">+996 555 123 456</a></p>
           <p><i class="fas fa-envelope"></i> <a href="mailto:info@kyrgyzrealty.kg">info@kyrgyzrealty.kg</a></p>
         </div>
         <div class="footer-section">
-          <h3>Рабочие часы</h3>
-          <p>Пн-Пт: 9:00 - 18:00</p>
-          <p>Сб: 10:00 - 14:00</p>
+          <h3>{{ _('Рабочие часы') }}</h3>
+          <p>{{ _('Пн-Пт: 9:00 - 18:00') }}</p>
+          <p>{{ _('Сб: 10:00 - 14:00') }}</p>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>© 2025 KyrgyzRealty. Все права защищены.</p>
+        <p>© 2025 KyrgyzRealty. {{ _('Все права защищены.') }}</p>
       </div>
     </div>
   </footer>
@@ -89,7 +102,7 @@
     {% for category, message in get_flashed_messages(with_categories=true) %}
     <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
       {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endfor %}
   </div>

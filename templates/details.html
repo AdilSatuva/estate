@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/index.css">
 </head>
 <body>
   <header>
@@ -19,11 +20,11 @@
         <a class="nav-link" href="/"><i class="fas fa-home"></i> {% trans %}Главная{% endtrans %}</a>
         {% if session.user_id %}
           <a class="nav-link" href="/profile"><i class="fas fa-user"></i> {% trans %}Профиль{% endtrans %}</a>
-          <a class="nav-link" href="/my_apartments"><i class="fas fa-list"></i> {% trans %}Мои объявления{% endtrans %}</a>
+          <a class="nav-link" href="/my_apartments"><i class="fas fa-building"></i> {% trans %}Мои квартиры{% endtrans %}</a>
           <a class="nav-link" href="/add_apartment"><i class="fas fa-plus"></i> {% trans %}Добавить{% endtrans %}</a>
           <a class="nav-link" href="/favorites"><i class="fas fa-heart"></i> {% trans %}Избранное{% endtrans %}</a>
           {% if session.username == 'admin' %}
-          <a class="nav-link" href="/admin"><i class="fas fa-cog"></i> {% trans %}Админ{% endtrans %}</a>
+            <a class="nav-link" href="/admin"><i class="fas fa-cog"></i> {% trans %}Админ{% endtrans %}</a>
           {% endif %}
           <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> {% trans %}Выйти{% endtrans %}</a>
         {% else %}
@@ -42,18 +43,22 @@
           <div class="col-md-6">
             <div id="carouselImages" class="carousel slide" data-bs-ride="carousel">
               <div class="carousel-inner">
-                <div class="carousel-item active">
-                  <img src="{{ apartment.image }}" class="d-block w-100 card-img-top" alt="{% trans %}Квартира{% endtrans %}">
-                </div>
+                {% for image in apartment.images %}
+                  <div class="carousel-item {{ 'active' if loop.first else '' }}">
+                    <img src="{{ image }}" class="d-block w-100 card-img-top" alt="{% trans %}Квартира{% endtrans %}">
+                  </div>
+                {% endfor %}
               </div>
-              <button class="carousel-control-prev" type="button" data-bs-target="#carouselImages" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">{% trans %}Previous{% endtrans %}</span>
-              </button>
-              <button class="carousel-control-next" type="button" data-bs-target="#carouselImages" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">{% trans %}Next{% endtrans %}</span>
-              </button>
+              {% if apartment.images|length > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselImages" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">{% trans %}Previous{% endtrans %}</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselImages" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">{% trans %}Next{% endtrans %}</span>
+                </button>
+              {% endif %}
             </div>
           </div>
           <div class="col-md-6">
@@ -64,22 +69,22 @@
               <span><i class="fas fa-ruler-combined"></i> {{ apartment.area }} м²</span>
               <span><i class="fas fa-building"></i> {% trans %}Этаж{% endtrans %} {{ apartment.floor }}/{{ apartment.total_floors }}</span>
             </div>
-            <p class="description">{{ apartment.description }}</p>
+            <p class="description">{{ apartment.description or ('Уютная квартира в центре ' + apartment.city) }}</p>
             {% if apartment.amenities %}
-            <h4>{% trans %}Удобства:{% endtrans %}</h4>
-            <ul>
-              {% for amenity in apartment.amenities %}
-              <li>{{ amenity }}</li>
-              {% endfor %}
-            </ul>
+              <h4>{% trans %}Удобства:{% endtrans %}</h4>
+              <ul>
+                {% for amenity in apartment.amenities %}
+                  <li>{{ amenity }}</li>
+                {% endfor %}
+              </ul>
             {% endif %}
             <div class="result-actions mt-3 d-flex gap-2">
-              <a href="tel:+996555123456" class="btn-primary"><i class="fas fa-phone"></i> {% trans %}Позвонить{% endtrans %}</a>
+              <a href="tel:+996555123456" class="btn btn-primary"><i class="fas fa-phone"></i> {% trans %}Позвонить{% endtrans %}</a>
               {% if session.user_id %}
-              <form action="/toggle_favorite/{{ apartment.id }}" method="POST" class="d-inline">
-                {{ form.hidden_tag() }}
-                <button type="submit" class="btn-secondary"><i class="fas fa-heart {{ 'text-danger' if apartment.id in favorites else '' }}"></i> {{ _('Удалить из избранного') if apartment.id in favorites else _('Добавить в избранное') }}</button>
-              </form>
+                <form action="{{ url_for('toggle_favorite', apartment_id=apartment.id) }}" method="POST" class="d-inline">
+                  {{ form.hidden_tag() }}
+                  <button type="submit" class="btn btn-secondary"><i class="fas fa-heart {{ 'text-danger' if is_favorite else '' }}"></i> {{ _('Удалить из избранного') if is_favorite else _('Добавить в избранное') }}</button>
+                </form>
               {% endif %}
             </div>
           </div>
@@ -87,36 +92,39 @@
         <div class="mt-4">
           <h3>{% trans %}Комментарии{% endtrans %}</h3>
           {% if comments %}
-          <div class="comments-list">
-            {% for comment in comments %}
-            <div class="card mb-2">
-              <div class="card-body">
-                <p><strong>{{ comment.user.username }}</strong> ({% trans %}Дата:{% endtrans %} {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }})</p>
-                <p>{{ comment.content }}</p>
-                {% if session.user_id == comment.user_id or session.username == 'admin' %}
-                <form action="/delete_comment/{{ comment.id }}" method="POST" class="d-inline">
-                  {{ form.hidden_tag() }}
-                  <button type="submit" class="btn-secondary btn-sm"><i class="fas fa-trash"></i> {% trans %}Удалить{% endtrans %}</button>
-                </form>
-                {% endif %}
-              </div>
+            <div class="comments-list">
+              {% for comment in comments %}
+                <div class="card mb-2">
+                  <div class="card-body">
+                    <p><strong>{{ comment.username }}</strong> ({% trans %}Дата:{% endtrans %} {{ comment.created_at }})</p>
+                    <p>{{ comment.content }}</p>
+                    {% if session.user_id == comment.user_id or session.username == 'admin' %}
+                      <form action="{{ url_for('delete_comment', comment_id=comment.id, apartment_id=apartment.id) }}" method="POST" class="d-inline">
+                        {{ form.hidden_tag() }}
+                        <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-trash"></i> {% trans %}Удалить{% endtrans %}</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
             </div>
-            {% endfor %}
-          </div>
           {% else %}
-          <p>{% trans %}Комментариев пока нет{% endtrans %}</p>
+            <p>{% trans %}Комментариев пока нет{% endtrans %}</p>
           {% endif %}
           {% if session.user_id %}
-          <form action="/add_comment/{{ apartment.id }}" method="POST" class="mt-3">
-            {{ form.hidden_tag() }}
-            <div class="form-group">
-              <label>{% trans %}Добавить комментарий{% endtrans %}</label>
-              <textarea class="form-control" name="content" rows="4" required></textarea>
-            </div>
-            <button type="submit" class="btn-primary mt-2"><i class="fas fa-comment"></i> {% trans %}Отправить{% endtrans %}</button>
-          </form>
+            <form action="{{ url_for('details', apartment_id=apartment.id) }}" method="POST" class="mt-3">
+              {{ form.hidden_tag() }}
+              <div class="form-group">
+                <label for="{{ form.content.id }}">{% trans %}Добавить комментарий{% endtrans %}</label>
+                {{ form.content(class="form-control", rows=4, required=True) }}
+                {% for error in form.content.errors %}
+                  <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+              </div>
+              <button type="submit" class="btn btn-primary mt-2"><i class="fas fa-comment"></i> {% trans %}Отправить{% endtrans %}</button>
+            </form>
           {% else %}
-          <p>{% trans %}Войдите, чтобы оставить комментарий{% endtrans %}</p>
+            <p>{% trans %}Войдите, чтобы оставить комментарий{% endtrans %}</p>
           {% endif %}
         </div>
       </div>
@@ -152,12 +160,12 @@
     </div>
   </footer>
 
-  <div class="alert">
+  <div class="alert-container">
     {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     {% endfor %}
   </div>
 

@@ -1,106 +1,106 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ get_locale() }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Админ-панель</title>
+  <title>{{ _('Админ панель') }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
-  <style>
-    .listing-card img { height: 150px; object-fit: cover; }
-    .table-responsive { max-width: 100px; max-height: 100px; object-fit: contain; }
-  </style>
+  <link rel="stylesheet" href="/static/admin.css">
 </head>
 <body>
   <header class="bg-white shadow-sm sticky-top">
-    <nav class="navbar navbar-expand-lg container">
-      <a class="navbar-brand" href="/"><span class="text-primary">Prime</span>Property</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item class="nav-link" href="/search"><i class="fas fa-search"></i> Поиск</a></li>
-          <li class="nav-item"><a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> Оценка</a></li>
-          <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Главная</a></li>
-          <li class="nav-item"><a class="nav-link" href="/profile"><i class="fas fa-user"></i> Профиль</a></li>
-          <li class="nav-item"><a class="nav-link" href="/my_apartments"><i class="fas fa-list"></i> Мои объявления</a></li>
-          <li class="nav-item"><a class="nav-link" href="/add_apartment"><i class="fas fa-plus"></i> Добавить</a></li>
-          <li class="nav-item"><a class="nav-link active" href="/admin"><i class="fas fa-cog"></i> Админ</a></li>
-          <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
-        </ul>
-      </div>
-    </nav>
+    <div class="container">
+      <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="/"><span>Prime</span>Property</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="/search"><i class="fas fa-search"></i> {{ _('Поиск') }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> {{ _('Оценка') }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> {{ _('Главная') }}</a></li>
+            {% if session['user_role'] == 'admin' %}
+              <li class="nav-item"><a class="nav-link active" href="/admin"><i class="fas fa-user-shield"></i> {{ _('Админ') }}</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> {{ _('Выйти') }}</a></li>
+            <li class="nav-item">
+              <div class="form-check form-switch ms-3">
+                <input class="form-check-input" type="checkbox" id="theme-toggle">
+                <label class="form-check-label" for="theme-toggle"><i class="fas fa-moon"></i></label>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
   </header>
 
-<main class="container py-5">
-    <h1 class="mb-4">Админ-панель</h1>
-    <ul class="nav nav-tabs mb-4">
-      <li class="nav-item">
-        <a class="nav-link" href="#apartments" data-bs-toggle="tab" class="nav-link active">Объявления</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#users" data-bs-toggle="tab">Пользователи</a>
-      </li>
-    </ul>
-    <div class="tab-content">
-      <!-- Вкладка Объявления -->
-      <div class="tab-pane fade show active" id="apartments">
-        <h3>Все объявления</h3>
-        {% if apartments %}
-        <div class="row">
-          {% for apartment in apartments %}
-          <div class="col-md-12 mb-4">
-            <div class="card listing-card">
-              <div class="row g-0">
-                <div class="col-md-3">
-                  <img src="{{ apartment.image }}" class="img-fluid rounded-start" alt="Квартира">
-                </div>
-                <div class="col-md-9">
+  <main class="py-5">
+    <div class="container">
+      <h1 class="text-center mb-4 animate__animated animate__fadeIn">{{ _('Админ панель') }}</h1>
+      <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="apartments-tab" data-bs-toggle="tab" data-bs-target="#apartments" type="button" role="tab" aria-controls="apartments" aria-selected="true">{{ _('Квартиры') }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="false">{{ _('Пользователи') }}</button>
+        </li>
+      </ul>
+      <div class="tab-content" id="adminTabsContent">
+        <div class="tab-pane fade show active" id="apartments" role="tabpanel" aria-labelledby="apartments-tab">
+          <div class="row">
+            {% for apartment in apartments %}
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 animate__animated animate__fadeIn">
                   <div class="card-body">
-                    <h5 class="card-title">{{ apartment.city }} - {{ apartment.address }}</h5>
-                    <p class="card-text">{{ apartment.price | format_price }} KGS | {{ apartment.rooms }} комнат | {{ apartment.area }} м²</p>
-                    <p class="text-muted">Статус: {{ 'Активно' if apartment.status == 'active' else 'Неактивно' }}</p>
-                    <button class="btn btn-{{ 'danger' if apartment.status == 'active' else 'success' }} btn-sm toggle-status" data-id="{{ apartment.id }}">
-                      <i class="fas fa-{{ 'pause' if apartment.status == 'active' else 'play' }}"></i>
-                      {{ 'Деактивировать' if apartment.status == 'active' else 'Активировать' }}
-                    </button>
-                    <a href="/details/{{ apartment.id }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i> Подробности</a>
+                    <h5 class="card-title">{{ apartment.title }}</h5>
+                    <p class="card-text">{{ _('Цена') }}: ${{ apartment.price }}</p>
+                    <p class="card-text">{{ _('Статус') }}: {{ 'Активен' if apartment.is_active else 'Неактивен' }}</p>
+                    <div class="d-flex justify-content-between">
+                      <a href="{{ url_for('edit_apartment', id=apartment.id) }}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i> {{ _('Редактировать') }}</a>
+                      <button class="btn btn-sm btn-{{ 'danger' if apartment.is_active else 'success' }}" onclick="toggleStatus({{ apartment.id }}, {{ apartment.is_active }})">
+                        <i class="fas fa-{{ 'ban' if apartment.is_active else 'check' }}"></i> {{ 'Деактивировать' if apartment.is_active else 'Активировать' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
-        {% else %}
-        <p class="text-muted">Нет объявлений.</p>
-        {% endif %}
-      </div>
-
-      <!-- Вкладка Пользователи -->
-      <div class="tab-pane fade" id="users">
-        <h3>Пользователи</h3>
-        <div class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Имя пользователя</th>
-                <th>Дата регистрации</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-              <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.created_at }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>{{ _('ID') }}</th>
+                  <th>{{ _('Имя') }}</th>
+                  <th>{{ _('Email') }}</th>
+                  <th>{{ _('Роль') }}</th>
+                  <th>{{ _('Действия') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                  <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                      <a href="{{ url_for('edit_user', id=user.id) }}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                      <a href="{{ url_for('delete_user', id=user.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('{{ _('Вы уверены?') }}')"><i class="fas fa-trash"></i></a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -111,53 +111,58 @@
       <div class="row">
         <div class="col-md-4">
           <h3>KyrgyzRealty</h3>
-          <p>Лучшие предложения недвижимости в Кыргызстане</p>
+          <p>{{ _('Лучшие предложения недвижимости в Кыргызстане') }}</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-telegram-plane"></i></a>
+          </div>
         </div>
         <div class="col-md-4">
-          <h3>Контакты</h3>
+          <h3>{{ _('Контакты') }}</h3>
           <p><i class="fas fa-phone"></i> <a href="tel:+996555123456" class="text-white">+996 555 123 456</a></p>
+          <p><i class="fas fa-envelope"></i> <a href="mailto:info@kyrgyzrealty.kg" class="text-white">info@kyrgyzrealty.kg</a></p>
         </div>
         <div class="col-md-4">
-          <h3>Рабочие часы</h3>
-          <p>Пн-Пт: 9:00 - 18:00</p>
+          <h3>{{ _('Рабочие часы') }}</h3>
+          <p>{{ _('Пн-Пт: 9:00 - 18:00') }}</p>
+          <p>{{ _('Сб: 10:00 - 14:00') }}</p>
         </div>
       </div>
-      <div class="text-center mt-3">
-        <p>© 2025 KyrgyzRealty. Все права защищены.</p>
+      <div class="text-center mt-4">
+        <p>© 2025 KyrgyzRealty. {{ _('Все права защищены.') }}</p>
       </div>
     </div>
   </footer>
 
-  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+  <div class="alert-container position-fixed top-0 end-0 p-3">
     {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
     {% endfor %}
   </div>
 
+  <script src="/static/dark-mode.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    document.querySelectorAll('.toggle-status').forEach(button => {
-      button.addEventListener('click', function() {
-        const apartmentId = this.dataset.id;
-        fetch(`/admin/toggle_status/${apartmentId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert(data.success);
-            window.location.reload();
-          } else {
-            alert(data.error);
-          }
-        })
-        .catch(error => alert('Ошибка: ' + error));
-      });
-    });
+    function toggleStatus(apartmentId, isActive) {
+      fetch(`/toggle_status/${apartmentId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: isActive })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('{{ _("Ошибка при изменении статуса") }}');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
   </script>
 </body>
 </html>

@@ -17,7 +17,7 @@
         <a class="nav-link" href="/predict"><i class="fas fa-calculator"></i> Оценка</a>
         <a class="nav-link" href="/"><i class="fas fa-home"></i> Главная</a>
         <a class="nav-link active" href="/profile"><i class="fas fa-user"></i> Профиль</a>
-        <a class="nav-link" href="/my_apartments"><i class="fas fa-list"></i> Мои объявления</a>
+        <a class="nav-link" href="/my_apartments"><i class="fas fa-building"></i> {% trans %}Мои объявления{% endtrans %}</a>
         <a class="nav-link" href="/add_apartment"><i class="fas fa-plus"></i> Добавить</a>
         {% if session.username == 'admin' %}
         <a class="nav-link" href="/admin"><i class="fas fa-cog"></i> Админ</a>
